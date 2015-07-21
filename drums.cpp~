@@ -166,7 +166,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
      // printf("in frame: %d\n",i);
       double t=((double)(total_frames))/sample_rate;
 
-      /*while((in_event.time == i) && (event_index < event_count))
+      while((in_event.time == i) && (event_index < event_count))
       {
          unsigned char command=in_event.buffer[0] & 0xf0;
          unsigned char channel=in_event.buffer[0] & 0x0f; 
@@ -192,12 +192,12 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             {
             int index=note-40;
   
-            //if(dv[index]->_is_in_active_queue==false)
-            //{
-            //   active_samples[highest_sample]=dv[index];
-            //   highest_sample++;
-            //   dv[index]->_is_in_active_queue=true;
-            //}
+            /*if(dv[index]->_is_in_active_queue==false)
+            {
+               active_samples[highest_sample]=dv[index];
+               highest_sample++;
+               dv[index]->_is_in_active_queue=true;
+            }*/
             dv[index]->note_on(vol_sq);
             }
          }
@@ -226,8 +226,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
          if(event_index < event_count)
             jack_midi_event_get(&in_event, port_buf, event_index);           
       }
-      */
-     
+           
       float sum=0;
 
       
