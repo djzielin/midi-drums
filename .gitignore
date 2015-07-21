@@ -22,13 +22,15 @@
 *.a
 *.lib
 
+# Editor Files
+*.~
+*.save
+
 # Executables
 *.exe
 *.out
 *.app
 keyboard
+drums
 get_instrument_connected
 
-# Editor Files
-*.~
-*.save

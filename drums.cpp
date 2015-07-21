@@ -32,12 +32,9 @@
 
 #include "echo_effect.h"
 
-double sample_rate=0;
 
 float *recording_buffer;
-
-jack_client_t *client;
-jack_nframes_t total_frames=0;
+unsigned int total_frames=0;
 
 bool do_record=true;
 unsigned int max_recording;
@@ -178,7 +175,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
    for(i = 0; i < nframes; i++)
    {
      // printf("in frame: %d\n",i);
-      double t=((double)(total_frames))/sample_rate;
+      double t=((double)(total_frames))/audio_sample_rate;
 
       /*while((in_event.time == i) && (event_index < event_count))
       {
@@ -325,19 +322,6 @@ int generate_samples(jack_nframes_t nframes, void *arg)
    return 0;      
 }
 
-static int srate(jack_nframes_t nframes, void *arg)
-{
-   printf("the sample rate is now %d samples per second\n", nframes);
-   sample_rate=nframes;
-
-   return 0;
-}
-
-static void jack_shutdown(void *arg)
-{
-   exit(1);
-}
-
 void init_from_config_file(string filename)
 {
    cout << "trying to setup kit based on configuration file" << endl;
@@ -384,7 +368,7 @@ void init_from_config_file(string filename)
 
       for(int i = 0; i < count; ++i)
       {
-         single_drum *sd=new single_drum(pads[i], sample_rate); 
+         single_drum *sd=new single_drum(pads[i], audio_sample_rate); 
          dv.push_back(sd);
       }
    }
@@ -394,19 +378,20 @@ void init_from_config_file(string filename)
    }
 }
 
+
 void init_sounds(string kit_name)
 {
    single_drum *d1,*d2, *d3, *d4, *d5, *d6, *d7, *d8;
-
+/*
    if(kit_name.compare("808")==0)
    {
       printf("choosing 808 kit!\n");
-      d1=new single_drum("kick",        "../dsamples/Roland_TR808/BD/BD7575.WAV", sample_rate);
-      d2=new single_drum("snare",       "../dsamples/Roland_TR808/SD/SD5075.WAV", sample_rate); 
-      d3=new single_drum("snare_rim",   "../dsamples/Roland_TR808/LC/LC00.WAV",   sample_rate);
-      d4=new single_drum("cymbal",      "../dsamples/Roland_TR808/CH/CH.WAV",     sample_rate); 
-      d5=new single_drum("cymbal_bell ","../dsamples/Roland_TR808/CP/CP.WAV",     sample_rate);
-      d6=new single_drum("cymbal_crash","../dsamples/Roland_TR808/CY/CY7575.WAV", sample_rate);  
+      d1=new single_drum("kick",        "../dsamples/Roland_TR808/BD/BD7575.WAV", audio_sample_rate);
+      d2=new single_drum("snare",       "../dsamples/Roland_TR808/SD/SD5075.WAV", audio_sample_rate); 
+      d3=new single_drum("snare_rim",   "../dsamples/Roland_TR808/LC/LC00.WAV",   audio_sample_rate);
+      d4=new single_drum("cymbal",      "../dsamples/Roland_TR808/CH/CH.WAV",     audio_sample_rate); 
+      d5=new single_drum("cymbal_bell ","../dsamples/Roland_TR808/CP/CP.WAV",     audio_sample_rate);
+      d6=new single_drum("cymbal_crash","../dsamples/Roland_TR808/CY/CY7575.WAV", audio_sample_rate);  
    }
    else if(kit_name.compare("808b")==0)
    {
@@ -470,6 +455,8 @@ void init_sounds(string kit_name)
       printf("requested: %s\n",kit_name.c_str());
       exit(1);
    }
+
+*/
 
    dv.push_back(d1);
    dv.push_back(d2);
@@ -565,17 +552,17 @@ int main(int argc, char **argv)
    }
 
    printf("initing comb filter\n");
-   cf=new comb_filter(sample_rate,5.0);
+   cf=new comb_filter(audio_sample_rate,5.0);
    printf("done\n");
 
-   ee=new echo_effect(sample_rate,10.0); 
-   ee->force_length(sample_rate*0.1);
+   ee=new echo_effect(audio_sample_rate,10.0); 
+   ee->force_length(audio_sample_rate*0.1);
 
 #ifdef BASSPORT
-    cf2=new comb_filter(sample_rate,5.0);
+    cf2=new comb_filter(audio_sample_rate,5.0);
 #endif
 
-   ewg=new wave_generator(sample_rate);
+   ewg=new wave_generator(audio_sample_rate);
    ewg->set_speed(2);
    //ewg->set_speed(50);
 
