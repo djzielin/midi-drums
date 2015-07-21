@@ -10,7 +10,7 @@
 #include<vector>
 using namespace std;
 
-#include <libconfig.h++>
+#include <libconfig.h++> //was h++
 using namespace libconfig;
 
 class single_parameter

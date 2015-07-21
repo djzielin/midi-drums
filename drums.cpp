@@ -112,6 +112,20 @@ float generated_samples[4096]; //TODO don't hardcode maximum
 
 extern float audio_sample_rate;
 
+#ifdef RASPBERRY
+  #include <wiringPi.h>
+//for the B+
+//#define LIGHT_PIN 26
+
+//for the 2
+#define LIGHT_PIN 13
+
+void setup_gpio()
+{
+   pinMode(LIGHT_PIN,OUTPUT);
+}
+#endif
+
 
 void write_config()
 {
