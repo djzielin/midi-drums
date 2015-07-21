@@ -192,6 +192,8 @@ int generate_samples(jack_nframes_t nframes, void *arg)
   enable_runfast();
 #endif
 
+   int num_midi_events=obtain_midi_events(nframes);
+
    for(int i = 0; i < nframes; i++)
    {
       // printf("in frame: %d\n",i);
@@ -212,7 +214,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             float vol_sq=vol_f*vol_f;
             
             //#ifdef DEBUG
-              // printf("port: %d note: %d vol: %d\n",channel,note,vol);
+               printf("note: %d vol: %d\n",note,vol);
             //#endif
 
             if(note==46)
