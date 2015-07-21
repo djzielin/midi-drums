@@ -165,27 +165,49 @@ static void signal_handler(int sig)
    exit(0);
 }
 
+#ifdef RASPBERRY
+
+// enable flush to zero to eliminate denormals
+// http://raspberrypisynthesizer.blogspot.com/2014_08_01_archive.html
+static inline void enable_runfast(void)
+{
+//#ifdef RPI
+    uint32_t fpscr;
+    __asm__ __volatile__ ("vmrs %0,fpscr" : "=r" (fpscr));
+    fpscr |= 0x03000000;
+    __asm__ __volatile__ ("vmsr fpscr,%0" : :"ri" (fpscr));
+//#endif
+}
+
+#endif
+
 bool all_ports_connected=false;
 bool pedal_pressed=false;
 
+
+
 int generate_samples(jack_nframes_t nframes, void *arg)
 {
-   int i,note,vol;
+#ifdef RASPBERRY
+  enable_runfast();
+#endif
 
-   for(i = 0; i < nframes; i++)
+   for(int i = 0; i < nframes; i++)
    {
-     // printf("in frame: %d\n",i);
+      // printf("in frame: %d\n",i);
       double t=((double)(total_frames))/audio_sample_rate;
 
-      /*while((in_event.time == i) && (event_index < event_count))
+      while(is_there_another_midi_event_for_frame(i))
       {
-         unsigned char command=in_event.buffer[0] & 0xf0;
-         unsigned char channel=in_event.buffer[0] & 0x0f; 
+         unsigned int *midi_event=get_next_midi_event();
+
+         int command=midi_event[0];
+         int note = midi_event[1];
+         int vol = midi_event[2];
 
          if (command == 0x90) //note on
          {   
-            note = in_event.buffer[1];
-            vol = in_event.buffer[2]; 
+
             float vol_f=vol/127.0;
             float vol_sq=vol_f*vol_f;
             
@@ -201,28 +223,28 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             }
             else
             {
-            int index=note-40;
+              int index=note-40;
   
-            //if(dv[index]->_is_in_active_queue==false)
-            //{
-            //   active_samples[highest_sample]=dv[index];
-            //   highest_sample++;
-            //   dv[index]->_is_in_active_queue=true;
-            //}
-            dv[index]->note_on(vol_sq);
+              //if(dv[index]->_is_in_active_queue==false)
+              //{
+              //   active_samples[highest_sample]=dv[index];
+              //   highest_sample++;
+              //   dv[index]->_is_in_active_queue=true;
+              //}
+              dv[index]->note_on(vol_sq);
             }
          }
          if(command == 0x80) //note off
          {
             //printf("got note off!\n");
-            note = in_event.buffer[1]; //used for HH-pedal
+            
             if(note==46) 
             {
                pedal_pressed=false;
                //printf("user released delay pedal\n");
             }
          }
-         if(command ==0xB0) //cc message
+         /*if(command ==0xB0) //cc message
          {
             unsigned char cc= in_event.buffer[1];
             unsigned char val= in_event.buffer[2];
@@ -232,12 +254,9 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             {     
                //printf("cc: %d val: %d\n",cc,val);
             }
-         }
-         event_index++;
-         if(event_index < event_count)
-            jack_midi_event_get(&in_event, port_buf, event_index);           
+         }*/
       }
-      */
+      
      
       float sum=0;
 
@@ -317,7 +336,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
       total_frames++;
    }
 
-   send_audio_to_card(generated_samples,nframes,false);
+   send_audio_to_card(generated_samples,nframes,false); //TODO make this stereo if we want to send bassdrum seperately
    
    return 0;      
 }
