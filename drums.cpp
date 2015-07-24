@@ -161,7 +161,7 @@ static void signal_handler(int sig)
 {
    //jack_client_close(client);
    fprintf(stderr, "signal received, exiting ...\n");
- 
+   audio_shutdown();
    write_config();
 	
    exit(0);
