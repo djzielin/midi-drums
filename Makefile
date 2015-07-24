@@ -20,7 +20,7 @@ endif
 CXXFLAGS += -DUSE_ALSA
 
 #CXXFLAGS+= -DRECORDING
-#CXXFLAGS += -DBASSPORT
+CXXFLAGS += -DBASSPORT
 
 COMMON_OBJECTS=single_drum.o mono_sample.o simple_envelope.o comb_filter.o single_parameter.o common.o wave_position.o wave_generator.o echo_effect.o simple_parameter.o ../midi-keyboard/audio.o ../midi-keyboard/midi.o
 

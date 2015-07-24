@@ -62,6 +62,8 @@ wave_generator *ewg;
 
 SimpleParamVec spv;
 
+const float atan_scaler=2.0/M_PI;
+
 #define SP_DELAY_FEEDBACK 0
 #define SP_DELAY_TIME 1
 #define SP_DELAY_INPUT 2
@@ -183,8 +185,9 @@ static inline void enable_runfast(void)
 
 bool all_ports_connected=false;
 bool pedal_pressed=false;
+float bass_sample;
 
-
+int old_rasp_value=-1;
 
 int generate_samples(jack_nframes_t nframes, void *arg)
 {
@@ -193,6 +196,8 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 #endif
 
    int num_midi_events=obtain_midi_events(nframes);
+
+   bool any_midi=false;
 
    for(int i = 0; i < nframes; i++)
    {
@@ -209,12 +214,13 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 
          if (command == 0x90) //note on
          {   
+            any_midi=true;
 
             float vol_f=vol/127.0;
             float vol_sq=vol_f*vol_f;
             
             //#ifdef DEBUG
-               printf("note: %d vol: %d\n",note,vol);
+               //printf("note: %d vol: %d\n",note,vol);
             //#endif
 
             if(note==46)
@@ -320,7 +326,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
       else    
          bass_sample+=cf2->tick(0); 
 
-      bout[i]=atan(bass_sample*spv[SP_BOOST_POST]->get_value());
+      //bout[i]=atan(bass_sample*spv[SP_BOOST_POST]->get_value())*atan_scaler;
 #endif
    
    // ee->set_read_speed(ewg->tick();
@@ -333,13 +339,40 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 
     //  sum+=ee->tick(sum);
 
-      generated_samples[i]=atan(sum*spv[SP_BOOST_POST]->get_value());
-      
+#ifndef BASSPORT
+      generated_samples[i]=atan(sum*spv[SP_BOOST_POST]->get_value())*atan_scaler;
+#else
+      generated_samples[i*2]=atan(sum*spv[SP_BOOST_POST]->get_value())*atan_scaler;
+      generated_samples[i*2+1]=atan(bass_sample*spv[SP_BOOST_POST]->get_value())*atan_scaler;
+
+#endif      
+
       total_frames++;
    }
 
-   send_audio_to_card(generated_samples,nframes,false); //TODO make this stereo if we want to send bassdrum seperately
-   
+#ifndef BASSPORT
+   send_audio_to_card(generated_samples,nframes,false); 
+#else
+   send_audio_to_card(generated_samples,nframes,true); 
+#endif  
+
+#ifdef RASPBERRY
+  //Below is for LED stuff
+
+   int new_rasp_value=any_midi;
+
+   if(new_rasp_value!=old_rasp_value)
+   {
+      if(new_rasp_value)
+         digitalWrite(LIGHT_PIN,HIGH);
+      else
+         digitalWrite(LIGHT_PIN,LOW);
+   }
+
+   old_rasp_value=new_rasp_value;
+#endif
+
+ 
    return 0;      
 }
 
