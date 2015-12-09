@@ -11,13 +11,13 @@ ifdef RASPBERRY
   LDFLAGS  +=-lwiringPi
   CXXFLAGS +=-DRASPBERRY -I/usr/local/include/stk
   LDFLAGS  += -lstk
+  CXXFLAGS += -DUSE_ALSA
    
 else
   LDFLAGS  +=-L$(wildcard ~/stk-4.4.3/src) -lstk
   CXXFLAGS += -I$(wildcard ~/stk-4.4.3/include)
 endif
 
-CXXFLAGS += -DUSE_ALSA
 
 #CXXFLAGS+= -DRECORDING
 CXXFLAGS += -DBASSPORT
