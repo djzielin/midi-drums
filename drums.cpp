@@ -195,10 +195,8 @@ int generate_samples(jack_nframes_t nframes, void *arg)
  //printf("trying to enable runfast\n");
   enable_runfast();
 #endif
-   obtain_midi_events(nframes);
-   int total_midi_events=get_total_events();
-
-   
+   //obtain_midi_events(nframes);
+   //int total_midi_events=get_total_events(); 
    //printf("total events: %d\n",total_midi_events);
 
 
@@ -227,11 +225,11 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             float vol_sq=vol_f*vol_f;
             
             //#ifdef DEBUG
-<<<<<<< HEAD
+
               printf("note: %d vol: %d\n",note,vol);
-=======
+
                //printf("note: %d vol: %d\n",note,vol);
->>>>>>> b0ce142bbfa1047ef9d5e0d447989f57c46c6fd7
+
             //#endif
 
             if(note==46)
@@ -363,8 +361,10 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 
 #ifndef BASSPORT
    send_audio_to_card(generated_samples,nframes,false); 
+
 #else
    send_audio_to_card(generated_samples,nframes,true); 
+   
 #endif  
 
 #ifdef RASPBERRY
