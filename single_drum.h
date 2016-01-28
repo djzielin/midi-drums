@@ -25,7 +25,7 @@ public:
 
     void note_off();
     void note_on(float velocity);
-    float tick();
+    float tick(float gspeed);
     bool is_playing() { return _is_playing; }
 
     void set_speed(float s);
@@ -37,6 +37,8 @@ public:
     void send_all_cc(void  *midi_port_buf);
     void setup_wg(int midi_note, float wg_env_time);
     void init_gui();
+    void set_gate(int val);
+    void set_boost(int val);
 
     bool _is_in_active_queue;
 
@@ -76,6 +78,8 @@ private:
    float _initial_boost;
    float _initial_delay_send;
    float _initial_rev_send;
+   int current_sample;
+   int gate_value;
 
 };
 

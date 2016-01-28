@@ -54,7 +54,7 @@ bool first_time=true;
 int current_instrument;
 
 int highest_sample=0;
-single_drum *active_samples[6];
+//single_drum *active_samples[6];
 bool delay_pedal_reverse=false;
 echo_effect *ee;
 
@@ -188,6 +188,7 @@ bool pedal_pressed=false;
 float bass_sample;
 
 int old_rasp_value=-1;
+float global_speed=1.0;
 
 int generate_samples(jack_nframes_t nframes, void *arg)
 {
@@ -214,16 +215,16 @@ int generate_samples(jack_nframes_t nframes, void *arg)
          unsigned int *midi_event=get_next_midi_event();
 
          int command=midi_event[0];
-         int note = midi_event[1];
-         int vol = midi_event[2];
+         int note =  midi_event[1];
+         int vol =   midi_event[2];
+
 
          if (command == 0x90) //note on
          {   
             any_midi=true;
-
             float vol_f=vol/127.0;
             float vol_sq=vol_f*vol_f;
-            
+     
             //#ifdef DEBUG
 
               printf("note: %d vol: %d\n",note,vol);
@@ -232,7 +233,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 
             //#endif
 
-            if(note==46)
+            if(note==47)
             {
                //printf("user pressed pedal!\n");
                pedal_pressed=true;
@@ -255,23 +256,58 @@ int generate_samples(jack_nframes_t nframes, void *arg)
          {
             //printf("got note off!\n");
             
-            if(note==46) 
+            if(note==47) 
             {
                pedal_pressed=false;
                //printf("user released delay pedal\n");
             }
          }
-         /*if(command ==0xB0) //cc message
+         if(command ==0xB0) //cc message
          {
-            unsigned char cc= in_event.buffer[1];
-            unsigned char val= in_event.buffer[2];
-            float val_f=val/127.0;
+            unsigned char cc= midi_event[1];
+            unsigned char val= midi_event[2];
+            float val_f=val/127.0f;
 
-            if(channel==0x00)//cc message
+            //if(channel==0x00)//cc message
             {     
-               //printf("cc: %d val: %d\n",cc,val);
+               printf("cc: %d val: %d\n",cc,val);
             }
-         }*/
+            if(cc==14)
+				{
+               for(int e=0;e<dv.size();e++)
+               {
+                     printf("setting gate on: %d\n",e);
+                     dv[e]->set_gate(val);
+                 
+               }
+            }
+            if(cc==15)
+            {
+               global_speed=val_f*4.0;
+            }
+            if(cc==16)
+            {
+               for(int e=0;e<dv.size();e++)
+               {
+                     printf("setting boost on: %d\n",e);
+                     dv[e]->set_boost(val);
+                 
+               }
+            }
+            if(cc==17)
+            {
+               spv[SP_DELAY_TIME]->set_value(val_f);
+            }
+            if(cc==18)
+            {
+               spv[SP_DELAY_FEEDBACK]->set_value(val_f);
+            }
+            if(cc==19)
+            {
+               spv[SP_DELAY_INPUT]->set_value(val_f);
+            }
+
+         }
       }
       
      
@@ -282,9 +318,9 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 
       
       
-      for(int e=0;e<6;e++)
+      for(int e=0;e<dv.size();e++)
       {
-         float sample=dv[e]->tick();
+         float sample=dv[e]->tick(global_speed);
          #ifdef RECORDING
             out_sub[e][i]=sample;
          #endif
@@ -447,54 +483,61 @@ void init_from_config_file(string filename)
 void init_sounds(string kit_name)
 {
    single_drum *d1,*d2, *d3, *d4, *d5, *d6, *d7, *d8;
-/*
+
    if(kit_name.compare("808")==0)
    {
       printf("choosing 808 kit!\n");
       d1=new single_drum("kick",        "../dsamples/Roland_TR808/BD/BD7575.WAV", audio_sample_rate);
       d2=new single_drum("snare",       "../dsamples/Roland_TR808/SD/SD5075.WAV", audio_sample_rate); 
       d3=new single_drum("snare_rim",   "../dsamples/Roland_TR808/LC/LC00.WAV",   audio_sample_rate);
-      d4=new single_drum("cymbal",      "../dsamples/Roland_TR808/CH/CH.WAV",     audio_sample_rate); 
-      d5=new single_drum("cymbal_bell ","../dsamples/Roland_TR808/CP/CP.WAV",     audio_sample_rate);
-      d6=new single_drum("cymbal_crash","../dsamples/Roland_TR808/CY/CY7575.WAV", audio_sample_rate);  
+      d4=new single_drum("cymbal",      "../dsamples/Roland_TR808/OH/OH75.WAV",   audio_sample_rate);
+      d5=new single_drum("cymbal_edge", "../dsamples/Roland_TR808/CY/CY7575.WAV", audio_sample_rate);  
+      d6=new single_drum("hat",         "../dsamples/Roland_TR808/CH/CH.WAV",     audio_sample_rate); 
+      d7=new single_drum("hat_edge",    "../dsamples/Roland_TR808/CP/CP.WAV",     audio_sample_rate);
    }
+/*
    else if(kit_name.compare("808b")==0)
    {
       printf("choosing 808 kit!\n");
       d1=new single_drum("kick",        "../dsamples/Roland_TR808/BD/BD7575.WAV", sample_rate);
-      d2=new single_drum("snare",       "../dsamples/Roland_TR808/CP/CP.WAV", sample_rate); 
-      d3=new single_drum("snare_rim",   "../dsamples/Roland_TR808/CH/CH.WAV",   sample_rate);
-      d4=new single_drum("cymbal",      "../dsamples/Roland_TR808/CH/CH.WAV",     sample_rate); 
-      d5=new single_drum("cymbal_bell ","../dsamples/Roland_TR808/RS/RS.WAV",     sample_rate);
-      d6=new single_drum("cymbal_crash","../dsamples/Roland_TR808/CY/CY7575.WAV", sample_rate);  
+      d2=new single_drum("snare",       "../dsamples/Roland_TR808/CP/CP.WAV",     sample_rate); 
+      d3=new single_drum("snare_rim",   "../dsamples/Roland_TR808/CH/CH.WAV",     sample_rate);
+      d4=new single_drum("ride",        "../dsamples/Roland_TR808/CH/CH.WAV",     sample_rate); 
+      d5=new single_drum("ride_edge",  "../dsamples/Roland_TR808/RS/RS.WAV",     sample_rate);
+      d6=new single_drum("hat", cymbal_crash","../dsamples/Roland_TR808/CY/CY7575.WAV", sample_rate);   //crash
+      d7=new single_drum("hat_edge", 
 
-      d1->setup_wg(36,2);
-      d3->setup_wg(60,0.25);
-      d4->setup_wg(67,0.25);
-      d5->setup_wg(72,0.25);
+      //d1->setup_wg(36,2);
+      //d3->setup_wg(60,0.25);
+      //d4->setup_wg(67,0.25);
+      //d5->setup_wg(72,0.25);
    }
+
+*/
    else if(kit_name.compare("amen")==0)
    {
       printf("choosing amen kit!\n");
-      d1=new single_drum("kick",     "../dsamples/amen/26885_VEXST_Kick_1.wav",sample_rate);
-      d2=new single_drum("snare",    "../dsamples/amen/26900_VEXST_Snare_1.wav",sample_rate);
-      d3=new single_drum("snare2",   "../dsamples/amen/26903_VEXST_Snare_4.wav",sample_rate);
-      d4=new single_drum("cymbal",   "../dsamples/amen/26889_VEXST_Open_hi_hat.wav",sample_rate);
-      d5=new single_drum("cymbal2",  "../dsamples/amen/26884_VEXST_Crash_eq2.wav",sample_rate);
-      d6=new single_drum("cymbal3",  "../dsamples/amen/26884_VEXST_Crash_eq2.wav",sample_rate);
+      d1=new single_drum("kick",     "../dsamples/amen/26885_VEXST_Kick_1.wav",audio_sample_rate);
+      d2=new single_drum("snare",    "../dsamples/amen/26900_VEXST_Snare_1.wav",audio_sample_rate);
+      d3=new single_drum("snare2",   "../dsamples/amen/26903_VEXST_Snare_4.wav",audio_sample_rate);
+      d4=new single_drum("cymbal",   "../dsamples/amen/26889_VEXST_Open_hi_hat.wav",audio_sample_rate);
+      d5=new single_drum("cymbal_edge",  "../dsamples/amen/26884_VEXST_Crash_eq2.wav",audio_sample_rate);
+      d6=new single_drum("cymbal",   "../dsamples/amen/26889_VEXST_Open_hi_hat.wav",audio_sample_rate);
+      d7=new single_drum("cymbal_edge",  "../dsamples/amen/26884_VEXST_Crash_eq2.wav",audio_sample_rate);
    }
    else if(kit_name.compare("linn")==0)
    {
       printf("choosing linn kit!\n");
-      d1=new single_drum("","../dsamples/Linn/kick.wav",sample_rate);
-      d2=new single_drum("","../dsamples/Linn/sd.wav",sample_rate);
-      d3=new single_drum("","../dsamples/Linn/tom.wav",sample_rate);
-      d4=new single_drum("","../dsamples/Linn/chh.wav",sample_rate);
-      d5=new single_drum("","../dsamples/Linn/crash.wav",sample_rate);
-      d6=new single_drum("","../dsamples/Linn/ride.wav",sample_rate);
+      d1=new single_drum("kick",       "../dsamples/Linn/kick.wav",audio_sample_rate);
+      d2=new single_drum("snare",      "../dsamples/Linn/sd.wav",audio_sample_rate);
+      d3=new single_drum("snare_rim",  "../dsamples/Linn/tom.wav",audio_sample_rate);
+      d4=new single_drum("cymbal",     "../dsamples/Linn/ride.wav",audio_sample_rate);
+      d5=new single_drum("cymbal_edge","../dsamples/Linn/crash.wav",audio_sample_rate);
+      d6=new single_drum("hat",        "../dsamples/Linn/chh.wav",audio_sample_rate);
+      d7=new single_drum("hat_edge",   "../dsamples/Linn/clap.wav",audio_sample_rate);
       d1->setup_wg(45,2);
    }
-   else if(kit_name.compare("atari")==0)
+ /*  else if(kit_name.compare("atari")==0)
    {
       printf("choosing atari kit!\n");
       d1=new single_drum("","../dsamples/atari/atari_2.wav",sample_rate);
@@ -503,8 +546,8 @@ void init_sounds(string kit_name)
       d4=new single_drum("","../dsamples/atari/atari_8.wav",sample_rate);
       d5=new single_drum("","../dsamples/atari/atari_3.wav",sample_rate);
       d6=new single_drum("","../dsamples/atari/atari_8.wav",sample_rate);
-   }     
-   else if(kit_name.compare("cr78")==0)
+   }   */  
+  /* else if(kit_name.compare("cr78")==0)
    {
       printf("choosing cr78 kit!\n");
       d1=new single_drum("","../dsamples/Roland_CR78/CR78Kick.aif",sample_rate);
@@ -513,7 +556,7 @@ void init_sounds(string kit_name)
       d4=new single_drum("","../dsamples/Roland_CR78/CR78HH.aif",sample_rate);
       d5=new single_drum("","../dsamples/Roland_CR78/CR78Woodblock2.aif",sample_rate);
       d6=new single_drum("","../dsamples/Roland_CR78/CR78HH.aif",sample_rate);
-   }     
+   }*/     
    else
    {
       printf("unable to find kit!\n");
@@ -521,15 +564,14 @@ void init_sounds(string kit_name)
       exit(1);
    }
 
-*/
-
    dv.push_back(d1);
    dv.push_back(d2);
    dv.push_back(d3);
    dv.push_back(d4);
    dv.push_back(d5);
    dv.push_back(d6);
-  
+   dv.push_back(d7);
+
    spv.push_back(new simple_parameter("delay_feedback",0.5,0,1));
    spv.push_back(new simple_parameter("delay_time",0.1,0,1));
    spv.push_back(new simple_parameter("delay_input_volume",0,0,1));
@@ -542,16 +584,16 @@ Fl_Double_Window *fltk_window;
 void init_gui()
 {
    printf("initializing gui...\n"); fflush(stdout);
-   fltk_window = new Fl_Double_Window(640, 480);
+   fltk_window = new Fl_Double_Window(1920, 1000);
 
-   Fl_Pack *p1 = new Fl_Pack(0,0,640,480);
+   Fl_Pack *p1 = new Fl_Pack(0,0,1920,1000);
    p1->spacing(15);
    p1->type(uchar(Fl_Pack::VERTICAL));
 
    for(int i=0;i<spv.size();i++)
       spv[i]->init_gui();
 
-   Fl_Pack* p = new Fl_Pack(0,0,1000,1000);
+   Fl_Pack* p = new Fl_Pack(0,0,1920,1000);
    p->spacing(15);
    p->type(uchar(Fl_Pack::HORIZONTAL));
  
@@ -565,8 +607,9 @@ void init_gui()
    p1->end();
    
    fltk_window->end();
- //  p->resizable(p);
- //  p1->resizable(p1);
+   fltk_window->show();
+   //p->resizable(p);
+   //p1->resizable(p1);
    fltk_window->resizable(fltk_window);
 }
 
@@ -641,6 +684,8 @@ int main(int argc, char **argv)
    setup_audio(0);
    setup_midi("Uno");
 
-   audio_loop();
+   //audio_loop();
+   Fl::run();
+
 }
 

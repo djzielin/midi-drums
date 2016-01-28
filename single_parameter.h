@@ -22,6 +22,7 @@ public:
    void init_gui();
    void set_max(float value);
    void set_min(float value);
+   float get_gmax() { return _g_max; }
    bool is_active() { return _active; }
 
    void write_config(Setting &effects);

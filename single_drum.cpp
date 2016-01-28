@@ -48,6 +48,16 @@ float calc_hz_from_midinote(int midi_note)
    return 440.0*pow(2.0,(midi_note-69.0)/12.0);
 }
 
+void single_drum::set_gate(int val)
+{
+   if(val==127)
+      gate_value=-1;
+   else
+   {
+      gate_value=100*val; 
+      printf("setting gate time to: %d samples\n",gate_value);
+   }
+}
 
 single_drum::single_drum(Setting &pad, int sample_rate)
 {
@@ -81,6 +91,7 @@ single_drum::single_drum(Setting &pad, int sample_rate)
       single_parameter *sp=new single_parameter(parameters[i]);
       _pv.push_back(sp);
    }
+   gate_value=-1;
 }
 
 
@@ -137,10 +148,12 @@ void single_drum::init_parameters()
    _pv.push_back(new single_parameter("volume_envelope",0,1,0,2));
    _pv.push_back(new single_parameter("pitch_envelope",0,0,0,2));
    _pv.push_back(new single_parameter("lp_filter",0.5,1,0,1));
-   _pv.push_back(new single_parameter("boost",0,0,0,100));
+   _pv.push_back(new single_parameter("boost",0,0,0,1000));
    _pv.push_back(new single_parameter("midi_note",0,0,0,100));
    _pv.push_back(new single_parameter("midi_vol",0,0,0,1));
    _pv.push_back(new single_parameter("midi_env",0,1,0,2));
+   gate_value=-1;
+
 }
 
 
@@ -195,6 +208,11 @@ void single_drum::receive_cc_message(int cc, float val)
 */
 }
 
+void single_drum::set_boost(int val)
+{
+   _pv[SD_BOOST]->set_max((float)val/127.0f*_pv[SD_BOOST]->get_gmax());
+}
+
 void single_drum::note_on(float velocity)
 { 
    _position.reset();
@@ -207,6 +225,7 @@ void single_drum::note_on(float velocity)
    _initial_boost=1.0;
    _initial_delay_send=0.0;
    _initial_rev_send=0.0;
+   current_sample=0;
 
    if(_pv[SD_INITIAL_VOLUME]->is_active())
       _initial_volume=_pv[SD_INITIAL_VOLUME]->calc_value(_initial_velocity);
@@ -280,10 +299,11 @@ void single_drum::note_off()
     //queue_up_single_cc(73+_index,0);
 }
 
-float single_drum::tick()
+float single_drum::tick(float gspeed)
 {
    if(_is_playing==false) return 0.0;
- 
+   if(gate_value!=-1 && current_sample>gate_value) {_is_playing=false; return 0.0;}
+
    float sample=_msample->get_sample(_position,_interpolation_type);
    if(_pv[SD_BOOST]->is_active())
       sample=atan(sample*_initial_boost);
@@ -301,7 +321,7 @@ float single_drum::tick()
    if(_pv[SD_PITCH_ENVELOPE]->is_active())
       speed=speed*_p_env->tick();
 
-   _position.increment(speed);
+   _position.increment(speed*gspeed);
   
    if(_msample->is_past_end(_position) || volume<0.01) // || _position.whole_part>2000)
    {
@@ -324,6 +344,6 @@ float single_drum::tick()
   //printf("generated sample: %.02f\n",sample); fflush(stdout);
   //rev_send+=sample*_initial_rev_send;
   //delay_send+=sample*_initial_delay_send;
-
+  current_sample++;
   return sample;
 }
