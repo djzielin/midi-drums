@@ -190,6 +190,9 @@ float bass_sample;
 int old_rasp_value=-1;
 float global_speed=1.0;
 
+
+
+
 int generate_samples(jack_nframes_t nframes, void *arg)
 {
 #ifdef RASPBERRY
@@ -221,6 +224,8 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 
          if (command == 0x90) //note on
          {   
+
+
             any_midi=true;
             float vol_f=vol/127.0;
             float vol_sq=vol_f*vol_f;
@@ -235,7 +240,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 
             if(note==47)
             {
-               //printf("user pressed pedal!\n");
+               printf("user pressed pedal!\n");
                pedal_pressed=true;
                
             }
@@ -250,6 +255,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
               //   dv[index]->_is_in_active_queue=true;
               //}
               dv[index]->note_on(vol_sq);
+              dv[index]->retrig_count=1;
             }
          }
          if(command == 0x80) //note off
@@ -259,7 +265,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             if(note==47) 
             {
                pedal_pressed=false;
-               //printf("user released delay pedal\n");
+               printf("user released delay pedal\n");
             }
          }
          if(command ==0xB0) //cc message
@@ -289,9 +295,14 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             {
                for(int e=0;e<dv.size();e++)
                {
-                     printf("setting boost on: %d\n",e);
-                     dv[e]->set_boost(val);
-                 
+                    dv[e]->set_boost(val);
+               }
+            }
+ 				if(cc==4)
+            {
+               for(int e=0;e<dv.size();e++)
+               {
+                    dv[e]->set_boost_offset(val);
                }
             }
             if(cc==17)

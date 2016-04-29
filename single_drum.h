@@ -25,6 +25,8 @@ public:
 
     void note_off();
     void note_on(float velocity);
+    void note_on();
+
     float tick(float gspeed);
     bool is_playing() { return _is_playing; }
 
@@ -39,10 +41,13 @@ public:
     void init_gui();
     void set_gate(int val);
     void set_boost(int val);
+    void set_boost_offset(int val);
 
     bool _is_in_active_queue;
 
     void write_config(Setting &pads);
+
+    int retrig_count;
 
 private:
    void init(string name, string filename, int sample_rate, int interp_type);
@@ -80,6 +85,7 @@ private:
    float _initial_rev_send;
    int current_sample;
    int gate_value;
+   float boost_offset;
 
 };
 

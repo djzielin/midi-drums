@@ -92,6 +92,7 @@ single_drum::single_drum(Setting &pad, int sample_rate)
       _pv.push_back(sp);
    }
    gate_value=-1;
+   boost_offset=0.0f;
 }
 
 
@@ -139,6 +140,7 @@ void single_drum::init(string name, string filename, int sample_rate, int interp
    _p_env=new simple_envelope();
    _v_env=new simple_envelope();
    _is_in_active_queue=false;
+   retrig_count=0;
 }
 
 void single_drum::init_parameters()
@@ -211,6 +213,16 @@ void single_drum::receive_cc_message(int cc, float val)
 void single_drum::set_boost(int val)
 {
    _pv[SD_BOOST]->set_max((float)val/127.0f*_pv[SD_BOOST]->get_gmax());
+}
+
+void single_drum::set_boost_offset(int val)
+{
+   boost_offset=(float)val/127.0f;
+}
+
+void single_drum::note_on()
+{
+   note_on(_initial_velocity); //just use most recent velocity
 }
 
 void single_drum::note_on(float velocity)
@@ -302,11 +314,30 @@ void single_drum::note_off()
 float single_drum::tick(float gspeed)
 {
    if(_is_playing==false) return 0.0;
+  
+   /*if(retrig_count>0 && current_sample>3000)
+   {
+      
+       if(retrig_count>5) //number of -retrigs
+       {
+          retrig_count=0;
+          _is_playing=false; //hmmm, do we want tail?
+          return 0.0;
+       }
+       else
+       {
+          retrig_count++;
+          note_on();
+         //_initial_pitch=_initial_pitch-(retrig_count-1.0f)*0.2f;
+         // if(_initial_pitch<0.0) _initial_pitch=0.0;
+       } 
+   }*/
+
    if(gate_value!=-1 && current_sample>gate_value) {_is_playing=false; return 0.0;}
 
    float sample=_msample->get_sample(_position,_interpolation_type);
    if(_pv[SD_BOOST]->is_active())
-      sample=atan(sample*_initial_boost);
+      sample=atan(sample*_initial_boost+boost_offset);
    float volume=_initial_volume;
 
    if(_pv[SD_VOLUME_ENVELOPE]->is_active())
@@ -345,5 +376,6 @@ float single_drum::tick(float gspeed)
   //rev_send+=sample*_initial_rev_send;
   //delay_send+=sample*_initial_delay_send;
   current_sample++;
+
   return sample;
 }
