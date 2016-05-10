@@ -48,6 +48,7 @@ public:
     void write_config(Setting &pads);
 
     int retrig_count;
+    float bonus_vol;
 
 private:
    void init(string name, string filename, int sample_rate, int interp_type);

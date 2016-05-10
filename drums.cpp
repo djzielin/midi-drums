@@ -125,6 +125,8 @@ void setup_gpio()
 }
 #endif
 
+float original_vols[16];
+
 
 void write_config()
 {
@@ -185,6 +187,8 @@ static inline void enable_runfast(void)
 
 bool all_ports_connected=false;
 bool pedal_pressed=false;
+bool pedal2_pressed=false;
+
 float bass_sample;
 
 int old_rasp_value=-1;
@@ -244,8 +248,17 @@ int generate_samples(jack_nframes_t nframes, void *arg)
                pedal_pressed=true;
                
             }
+            else if(note==48)
+            {
+               printf("user pressed pedal2!\n");
+               pedal2_pressed=true;
+               
+            }
             else
             {
+              if(pedal2_pressed && note==45)
+                 note=43;
+
               int index=note-40;
   
               //if(dv[index]->_is_in_active_queue==false)
@@ -266,6 +279,11 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             {
                pedal_pressed=false;
                printf("user released delay pedal\n");
+            }
+            if(note==48) 
+            {
+               pedal2_pressed=false;
+               printf("user released pedal2\n");
             }
          }
          if(command ==0xB0) //cc message
@@ -298,13 +316,13 @@ int generate_samples(jack_nframes_t nframes, void *arg)
                     dv[e]->set_boost(val);
                }
             }
- 				if(cc==4)
-            {
-               for(int e=0;e<dv.size();e++)
-               {
-                    dv[e]->set_boost_offset(val);
-               }
-            }
+ 				//if(cc==4)
+            //{
+             //  for(int e=0;e<dv.size();e++)
+             //  {
+              //      dv[e]->set_boost_offset(val);
+              // }
+            //}
             if(cc==17)
             {
                spv[SP_DELAY_TIME]->set_value(val_f);
@@ -316,6 +334,18 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             if(cc==19)
             {
                spv[SP_DELAY_INPUT]->set_value(val_f);
+            }
+            if(cc>2 && cc<10)
+            {
+               int note=cc-2;
+
+               if(original_vols[note]==-1)
+               {
+                  float vol=val_f*2.0;
+                  dv[note]->bonus_vol=vol;
+                  printf("set not: %d to vol %f\n",vol,note);
+               }
+
             }
 
          }
@@ -630,6 +660,9 @@ int main(int argc, char **argv)
    wiringPiSetupGpio();
    setup_gpio();
 #endif
+
+   for(int i=0;i<16;i++)
+     original_vols[i]=-1;
 
    srand ( time(NULL) );
    

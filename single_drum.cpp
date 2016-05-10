@@ -93,6 +93,7 @@ single_drum::single_drum(Setting &pad, int sample_rate)
    }
    gate_value=-1;
    boost_offset=0.0f;
+   bonus_vol=1.0f;
 }
 
 
@@ -260,8 +261,9 @@ void single_drum::note_on(float velocity)
 
    if(_pv[SD_VOLUME_ENVELOPE]->is_active())
    {
-      _v_env->set_envelope(_pv[SD_VOLUME_ENVELOPE]->calc_value(_initial_velocity)*_sample_rate);
       _v_env->reset();
+      _v_env->set_envelope(_pv[SD_VOLUME_ENVELOPE]->calc_value(_initial_velocity)*_sample_rate);
+
    }
    if(_pv[SD_PITCH_ENVELOPE]->is_active())
    {
@@ -333,7 +335,7 @@ float single_drum::tick(float gspeed)
        } 
    }*/
 
-   if(gate_value!=-1 && current_sample>gate_value) {_is_playing=false; return 0.0;}
+   if(gate_value!=-1 && current_sample>gate_value) { printf("activatating gate\n"); _is_playing=false; return 0.0;}
 
    float sample=_msample->get_sample(_position,_interpolation_type);
    if(_pv[SD_BOOST]->is_active())
@@ -342,11 +344,12 @@ float single_drum::tick(float gspeed)
 
    if(_pv[SD_VOLUME_ENVELOPE]->is_active())
      volume=volume*_v_env->tick();
-
-   sample=sample*volume;
-
-   if(_pv[SD_LP_FILTER]->is_active())
-      sample=_filter->tick(sample);
+   if(volume<0.01) 
+      printf("less than 0\n");
+   sample=sample*volume*bonus_vol;
+  
+   //if(_pv[SD_LP_FILTER]->is_active())
+   //   sample=_filter->tick(sample);
  
    float speed=_initial_pitch;
    if(_pv[SD_PITCH_ENVELOPE]->is_active())
@@ -363,7 +366,9 @@ float single_drum::tick(float gspeed)
       }
       else
       {
+          
          _is_playing=false;
+         printf("past end position. stopping\n");
       }
    }
    if(_pv[SD_MIDI_NOTE]->is_active())
