@@ -236,7 +236,7 @@ int generate_samples(jack_nframes_t nframes, void *arg)
      
             //#ifdef DEBUG
 
-              printf("note: %d vol: %d\n",note,vol);
+              //printf("note: %d vol: %d\n",note,vol);
 
                //printf("note: %d vol: %d\n",note,vol);
 
@@ -278,12 +278,12 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             if(note==47) 
             {
                pedal_pressed=false;
-               printf("user released delay pedal\n");
+               //printf("user released delay pedal\n");
             }
             if(note==48) 
             {
                pedal2_pressed=false;
-               printf("user released pedal2\n");
+               //printf("user released pedal2\n");
             }
          }
          if(command ==0xB0) //cc message
@@ -718,7 +718,7 @@ int main(int argc, char **argv)
    ewg->set_speed(2);
    //ewg->set_speed(50);
 
-   init_gui(); //TODO check command line flag to see if we should do gui or not
+   //init_gui(); //TODO check command line flag to see if we should do gui or not
 
    signal(SIGQUIT, signal_handler);
    signal(SIGTERM, signal_handler);
@@ -728,8 +728,8 @@ int main(int argc, char **argv)
    setup_audio(0);
    setup_midi("Uno");
 
-   //audio_loop();
-   Fl::run();
+   audio_loop();
+   //Fl::run();
 
 }
 

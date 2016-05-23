@@ -344,9 +344,9 @@ float single_drum::tick(float gspeed)
 
    if(_pv[SD_VOLUME_ENVELOPE]->is_active())
      volume=volume*_v_env->tick();
-   if(volume<0.01) 
-      printf("less than 0\n");
-   sample=sample*volume*bonus_vol;
+  // if(volume<0.01) 
+  //    printf("less than 0\n");
+   sample=sample*volume; //*bonus_vol;
   
    //if(_pv[SD_LP_FILTER]->is_active())
    //   sample=_filter->tick(sample);
@@ -368,7 +368,7 @@ float single_drum::tick(float gspeed)
       {
           
          _is_playing=false;
-         printf("past end position. stopping\n");
+        // printf("past end position. stopping\n");
       }
    }
    if(_pv[SD_MIDI_NOTE]->is_active())
