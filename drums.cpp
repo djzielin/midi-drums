@@ -536,6 +536,18 @@ void init_sounds(string kit_name)
       d6=new single_drum("hat",         "../dsamples/Roland_TR808/CH/CH.WAV",     audio_sample_rate); 
       d7=new single_drum("hat_edge",    "../dsamples/Roland_TR808/CP/CP.WAV",     audio_sample_rate);
    }
+   if(kit_name.compare("vibes")==0)
+   {
+      printf("choosing vibes kit!\n");
+      d1=new single_drum("kick",        "../ksamples/vibes/116348__atonia__53.wav", audio_sample_rate);
+      d2=new single_drum("snare",       "../ksamples/vibes/116360__atonia__65.wav", audio_sample_rate); 
+      d3=new single_drum("snare_rim",   "../ksamples/vibes/116363__atonia__68.wav",   audio_sample_rate);
+      d6=new single_drum("cymbal",      "../ksamples/vibes/116365__atonia__70.wav",   audio_sample_rate);
+      d7=new single_drum("cymbal_edge", "../ksamples/vibes/116367__atonia__72.wav", audio_sample_rate);  
+      d4=new single_drum("hat",         "../ksamples/vibes/116370__atonia__75.wav",     audio_sample_rate); 
+      d5=new single_drum("hat_edge",    "../ksamples/vibes/116372__atonia__77.wav",     audio_sample_rate);
+
+   }
 /*
    else if(kit_name.compare("808b")==0)
    {
