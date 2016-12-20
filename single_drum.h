@@ -42,7 +42,7 @@ public:
     void set_gate(int val);
     void set_boost(int val);
     void set_boost_offset(int val);
-
+    void set_pitch(float p) { _user_pitch=p; }
     bool _is_in_active_queue;
 
     void write_config(Setting &pads);
@@ -53,7 +53,7 @@ public:
 private:
    void init(string name, string filename, int sample_rate, int interp_type);
    void init_parameters();
-
+ 
    string _name;
    int _index;
    int _sample_rate;
@@ -61,6 +61,8 @@ private:
   
    string _sample_filename;
    int _interpolation_type; 
+
+   float _user_pitch;
    
    wave_position _position;
    bool _is_playing;

@@ -40,7 +40,10 @@ bool do_record=true;
 unsigned int max_recording;
 
 int count=0;
+
 DrumVec dv;
+
+single_drum *vibe_samples[40];
 
 comb_filter *cf;
 comb_filter *cf2;
@@ -52,7 +55,7 @@ stk::NRev *rev;
 void* midi_port_buf;
 bool first_time=true;
 int current_instrument;
-
+bool is_vibes=false;
 int highest_sample=0;
 //single_drum *active_samples[6];
 bool delay_pedal_reverse=false;
@@ -194,7 +197,7 @@ float bass_sample;
 int old_rasp_value=-1;
 float global_speed=1.0;
 
-
+float user_vol=1.0f;
 
 
 int generate_samples(jack_nframes_t nframes, void *arg)
@@ -230,17 +233,17 @@ int generate_samples(jack_nframes_t nframes, void *arg)
          {   
 
 
-           for(int e=0;e<dv.size();e++)
-           {
+           //for(int e=0;e<dv.size();e++)
+          // {
               //dv[e]->note_off(); //to make monophonic
-           }
+          // }
             any_midi=true;
             float vol_f=vol/127.0;
             float vol_sq=vol_f*vol_f;
      
             //#ifdef DEBUG
 
-              //printf("note: %d vol: %d\n",note,vol);
+              printf("note: %d vol: %d\n",note,vol);
 
                //printf("note: %d vol: %d\n",note,vol);
 
@@ -339,18 +342,24 @@ int generate_samples(jack_nframes_t nframes, void *arg)
             {
                spv[SP_DELAY_INPUT]->set_value(val_f);
             }
-            if(cc>2 && cc<10)
+            if(cc>1 && cc<10 && is_vibes)
             {
                int note=cc-2;
 
-               if(original_vols[note]==-1)
+               /*if(original_vols[note]==-1)
                {
                   float vol=val_f*2.0;
                   dv[note]->bonus_vol=vol;
                   printf("set not: %d to vol %f\n",vol,note);
-               }
-
+               }*/
+               float new_note=val_f*36.0f;
+               int new_note_int=(int)new_note;
+               printf("going to try and set pad: %d to vibe note: %d\n",note,new_note_int);
+	       dv[note]->note_off();
+               dv[note]=vibe_samples[new_note_int];
             }
+            if(cc==13) 
+               user_vol=val_f;
 
          }
       }
@@ -432,8 +441,8 @@ int generate_samples(jack_nframes_t nframes, void *arg)
 #ifndef BASSPORT
       generated_samples[i]=atan(sum*spv[SP_BOOST_POST]->get_value())*atan_scaler;
 #else
-      generated_samples[i*2]=atan(sum*spv[SP_BOOST_POST]->get_value())*atan_scaler;
-      generated_samples[i*2+1]=atan(bass_sample*spv[SP_BOOST_POST]->get_value())*atan_scaler;
+      generated_samples[i*2]=atan(sum*spv[SP_BOOST_POST]->get_value()*user_vol)*atan_scaler;
+      generated_samples[i*2+1]=atan(bass_sample*spv[SP_BOOST_POST]->get_value()*user_vol)*atan_scaler;
 
 #endif      
 
@@ -543,17 +552,36 @@ void init_sounds(string kit_name)
    if(kit_name.compare("vibes")==0)
    {
       printf("choosing vibes kit!\n");
-      d1=new single_drum("kick",        "../ksamples/vibes/116348__atonia__53.wav", audio_sample_rate);
+      is_vibes=true;
+
+      for(int i=53;i<90;i++)
+      {
+         char filename[400];
+         sprintf(filename,"../ksamples/vibes/%d.wav",i);
+         char padname[400];
+         sprintf(padname,"vibes%d",i);
+         vibe_samples[i-53]=new single_drum(padname,filename,audio_sample_rate);
+         vibe_samples[i-53]->set_pitch(0.5f);
+      }
+
+ /*   d1=new single_drum("kick",        "../ksamples/vibes/116348__atonia__53.wav", audio_sample_rate);
       d2=new single_drum("snare",       "../ksamples/vibes/116360__atonia__65.wav", audio_sample_rate); 
       d3=new single_drum("snare_rim",   "../ksamples/vibes/116363__atonia__68.wav",   audio_sample_rate);
-      d6=new single_drum("cymbal",      "../ksamples/vibes/116365__atonia__70.wav",   audio_sample_rate);
-      d7=new single_drum("cymbal_edge", "../ksamples/vibes/116367__atonia__72.wav", audio_sample_rate);  
       d4=new single_drum("hat",         "../ksamples/vibes/116370__atonia__75.wav",     audio_sample_rate); 
       d5=new single_drum("hat_edge",    "../ksamples/vibes/116372__atonia__77.wav",     audio_sample_rate);
+      d6=new single_drum("cymbal",      "../ksamples/vibes/116365__atonia__70.wav",   audio_sample_rate);
+      d7=new single_drum("cymbal_edge", "../ksamples/vibes/116367__atonia__72.wav", audio_sample_rate);  
+ */
 
+      d1=vibe_samples[53-53];
+      d2=vibe_samples[65-53];
+      d3=vibe_samples[68-53];
+      d4=vibe_samples[75-53];
+      d5=vibe_samples[77-53];
+      d6=vibe_samples[70-53];
+      d7=vibe_samples[72-53];
    }
-/*
-   else if(kit_name.compare("808b")==0)
+/*   else if(kit_name.compare("808b")==0)
    {
       printf("choosing 808 kit!\n");
       d1=new single_drum("kick",        "../dsamples/Roland_TR808/BD/BD7575.WAV", sample_rate);
@@ -561,15 +589,15 @@ void init_sounds(string kit_name)
       d3=new single_drum("snare_rim",   "../dsamples/Roland_TR808/CH/CH.WAV",     sample_rate);
       d4=new single_drum("ride",        "../dsamples/Roland_TR808/CH/CH.WAV",     sample_rate); 
       d5=new single_drum("ride_edge",  "../dsamples/Roland_TR808/RS/RS.WAV",     sample_rate);
-      d6=new single_drum("hat", cymbal_crash","../dsamples/Roland_TR808/CY/CY7575.WAV", sample_rate);   //crash
-      d7=new single_drum("hat_edge", 
+      //d6=new single_drum("hat", cymbal_crash,"../dsamples/Roland_TR808/CY/CY7575.WAV", sample_rate);   //crash
+      //d7=new single_drum("hat_edge", 
+
 
       //d1->setup_wg(36,2);
       //d3->setup_wg(60,0.25);
       //d4->setup_wg(67,0.25);
       //d5->setup_wg(72,0.25);
    }
-
 */
    else if(kit_name.compare("amen")==0)
    {

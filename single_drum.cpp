@@ -142,6 +142,7 @@ void single_drum::init(string name, string filename, int sample_rate, int interp
    _v_env=new simple_envelope();
    _is_in_active_queue=false;
    retrig_count=0;
+   _user_pitch=1.0f;
 }
 
 void single_drum::init_parameters()
@@ -244,6 +245,8 @@ void single_drum::note_on(float velocity)
       _initial_volume=_pv[SD_INITIAL_VOLUME]->calc_value(_initial_velocity);
    if(_pv[SD_INITIAL_PITCH]->is_active())
       _initial_pitch=_pv[SD_INITIAL_PITCH]->calc_value(_initial_velocity);
+   else
+      _initial_pitch=_user_pitch;
    if(_pv[SD_INITIAL_PITCH]->is_active())
       _initial_filter=_pv[SD_LP_FILTER]->calc_value(_initial_velocity);   
    if(_pv[SD_BOOST]->is_active())
