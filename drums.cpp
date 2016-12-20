@@ -230,6 +230,10 @@ int generate_samples(jack_nframes_t nframes, void *arg)
          {   
 
 
+           for(int e=0;e<dv.size();e++)
+           {
+              //dv[e]->note_off(); //to make monophonic
+           }
             any_midi=true;
             float vol_f=vol/127.0;
             float vol_sq=vol_f*vol_f;
